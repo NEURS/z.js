@@ -1,12 +1,12 @@
 /*!
- * z.js JavaScript Library v0.0.1
+ * z.js JavaScript Library v0.0.2
  * https://github.com/NEURS/z.js
  *
  * Copyright 2014 NEURS LLC, Kevin J. Martin, and other contributors
  * Released under the MIT license
  * https://github.com/NEURS/z.js/blob/master/LICENSE
  *
- * Date: 2014-08-15T04:17Z
+ * Date: 2014-08-15T15:10Z
  */
 ;(function (window, document) {
 
@@ -114,8 +114,32 @@ if ("dataset" in document.body) {
 	};
 }
 
-z.fn.on = z.fn.bind = function (eventType, fn) {
-	
+z.fn.on = z.fn.bind = _each(function _on(eventType, fn) {
+	this.addEventListener(eventType, fn, false);
+});
+
+z.fn.off = z.fn.unbind = _each(function _off(eventType, fn) {
+	this.removeEventListener(eventType, fn, false);
+});
+
+z.fn.trigger = function (eventType, data) {
+	var event, _data,
+		i = 0,
+		l = this.length;
+
+	try {
+		_data	= data ? {detail: data} : undefined;
+		event	= new CustomEvent(eventType, _data);
+	} catch (err) {
+		event = document.createEvent('CustomEvent');
+		event.initCustomEvent(eventType, true, true, data);
+	}
+
+	for (; i < l; i++) {
+		this[i].dispatchEvent(event);
+	}
+
+	return this;
 };
 
 function _isWithFunction(elem, fn) {
