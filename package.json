@@ -1,0 +1,39 @@
+{
+  "name": "z.js",
+  "version": "0.0.1",
+  "description": "Simple DOM Manipulator",
+  "main": "",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/NEURS/z.js.git"
+  },
+  "keywords": [
+    "z",
+    "z.js",
+    "simple",
+    "dom",
+    "manipulator",
+    "browser",
+    "javascript",
+    "selector"
+  ],
+  "author": "Kevin J. Martin",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/NEURS/z.js/issues"
+  },
+  "homepage": "https://github.com/NEURS/z.js",
+  "devDependencies": {
+    "gulp-sourcemaps": "~1.1.1",
+    "gulp-concat": "~2.3.4",
+    "gulp": "~3.8.7",
+    "del": "~0.1.2",
+    "gulp-uglify": "~0.3.1",
+    "streamqueue": "~0.1.1",
+    "gulp-stream": "0.0.2",
+    "gulp-replace": "~0.4.0"
+  }
+}
