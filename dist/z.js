@@ -6,7 +6,7 @@
  * Released under the MIT license
  * https://github.com/NEURS/z.js/blob/master/LICENSE
  *
- * Date: 2014-08-15T15:10Z
+ * Date: 2014-08-19T20:00Z
  */
 ;(function (window, document) {
 
@@ -222,7 +222,7 @@ z.fn.html = function (value) {
 	var i, l;
 
 	if (value === undefined) {
-		return this.innerHTML;
+		return this[0].innerHTML;
 	}
 
 	for (i = 0, l = this.length; i < l; i++) {
@@ -314,6 +314,81 @@ if ("classList" in document.documentElement) {
 	};
 }
 
+z.fn.append = function (value) {
+	var element, i = 0, l = this.length;
+
+	if (value === undefined) {
+		throw new Error("First parameter of z#append is required.");
+	}
+
+	if (typeof value === "string") {
+		for (; i < l; i++) {
+			this[i].insertAdjacentHTML('beforeend', value);
+		}
+
+		return this;
+	}
+
+	if (value instanceof zArray) {
+		value = value[0];
+	}
+
+
+	for (; i < l; i++) {
+		this[i].appendChild(value);
+	}
+
+	return this;
+}
+
+z.fn.prepend = function (value) {
+	var element, i = 0, l = this.length;
+
+	if (value === undefined) {
+		throw new Error("First parameter of z#prepend is required.");
+	}
+
+	if (typeof value === "string") {
+		for (; i < l; i++) {
+			this[i].insertAdjacentHTML('afterbegin', value);
+		}
+
+		return this;
+	}
+
+	if (value instanceof zArray) {
+		value = value[0];
+	}
+
+
+	for (; i < l; i++) {
+		this[i].insertBefore(value, this[i].firstChild);
+	}
+
+	return this;
+}
+
+z.fn.css = function (rule, value) {
+	var i = 0, l = this.length;
+
+	if (rule === undefined) {
+		throw new Error("First parameter of z#css is required.");
+	}
+
+	if (value === undefined) {
+			return getComputedStyle(this[0])[rule];
+	} else {
+		rule = rule.replace(/-./g, function (result) {
+		    return result.substr(1).toUpperCase();
+		});
+
+		for (; i < l; i++) {
+			this[i].style[rule] = value;
+		}
+	}
+
+	return this;
+}
 var _selectorsCache,
 	_selectors = {};
 
