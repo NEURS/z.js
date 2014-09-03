@@ -1,12 +1,12 @@
 /*!
- * z.js JavaScript Library v0.0.2
+ * z.js JavaScript Library v0.0.3
  * https://github.com/NEURS/z.js
  *
  * Copyright 2014 NEURS LLC, Kevin J. Martin, and other contributors
  * Released under the MIT license
  * https://github.com/NEURS/z.js/blob/master/LICENSE
  *
- * Date: 2014-08-19T20:00Z
+ * Date: 2014-08-27T17:10Z
  */
 ;(function (window, document) {
 
@@ -35,6 +35,8 @@ function z(elem, scope) {
 
 	return _find(scope, elem);
 }
+
+function noop(){}
 
 try {
 	iframe = document.createElement("iframe");
@@ -65,6 +67,151 @@ z.fn.find = function (strElem) {
 
 	return _find(this, strElem);
 };
+
+var ajaxDefaults, ajaxTypes,
+	ajaxMimes	= {}
+
+ajaxDefaults = {
+	method: "GET",
+	requestType: "text",
+	responseType: "text",
+	url: window.location + "",
+	query: null,
+	data: null,
+	setup: noop,
+	success: noop,
+	error: noop
+};
+
+ajaxTypes = {
+	text: function (data) {
+		return (data || "") + "";
+	}
+};
+
+z.ajax = function (options) {
+	var data,
+		req = new XMLHttpRequest();
+
+	options = z.extend({
+		context: req
+	}, ajaxDefaults, options);
+
+	if (!ajaxTypes[options.requestType]) {
+		throw new Error("Invalid option `requestType`");
+	} else if (!ajaxTypes[options.responseType]) {
+		throw new Error("Invalid option `responseType`");
+	}
+
+	if (options.query && ~["HEAD", "GET"].indexOf(options.method.toUpperCase())) {
+		options.url	+= ~options.url.indexOf("?") ? "&" : "?";
+		options.url	+= z.queryString(options.query);
+		options.url	= options.url.replace(/(\?|&)&/g, "$1");
+	}
+
+	req.open(options.method, options.url, true);
+
+	req.onload = function () {
+		var resp;
+
+		if (req.status >= 200 && req.status < 400) {
+			resp = ajaxTypes[options.responseType].call(req, req.responseText, true);
+			options.success.call(options.context, resp);
+		} else {
+			options.error.call(options.context, req.status, req.statusText);
+		}
+	};
+
+	req.onerror = function () {
+		options.error.call(options.context, req.status, req.statusText);
+	};
+
+	if (!~["HEAD", "GET"].indexOf(options.method.toUpperCase())) {
+		req.setRequestHeader("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8");
+	}
+
+	if (options.data) {
+		options.data = ajaxTypes[options.requestType].call(req, options.data, false);
+	}
+
+	options.setup.call(req, req);
+
+	req.send(options.data);
+};
+
+ajaxDefaults.requestType	= "detect";
+ajaxDefaults.responseType	= "detect";
+
+z.registerAjaxType = function (type, mime, fn) {
+	if (!fn && typeof mime === "function") {
+		fn		= mime;
+		mime	= false;
+	}
+
+	ajaxTypes[type] = fn;
+
+	if (mime) {
+		ajaxMimes[mime] = type;
+	}
+};
+
+z.registerAjaxType("detect", function (data, isResponse) {
+	var header,
+		type = "text";
+
+	if (isResponse) {
+		header	= this.getResponseHeader("Content-Type") || "",
+		header	= header.split(";")[0].trim();
+		type	= ajaxMimes[header] || "text";
+	} else {
+		if (data && typeof data === "object" && data.toString === ({}).toString) {
+			type = "json";
+		}
+	}
+
+	return ajaxTypes[type].call(this, data, isResponse);
+});
+
+z.registerAjaxType("json", "application/json", function (data, isResponse) {
+	return isResponse ? JSON.parse(data) : JSON.stringify(data);
+});
+
+z.registerAjaxType("html", "text/html", function (data, isResponse) {
+	var doc, arr;
+
+	if (!isResponse) {
+		return data.outerHTML;
+	}
+
+	arr	= new zArray();
+	doc = document.implementation.createHTMLDocument();
+
+	doc.documentElement.innerHTML = data;
+
+	arr.push.apply(arr, arr.slice.call(doc.body.children, 0));
+
+	return arr;
+});
+
+z.registerAjaxType("xml", "text/xml", ajaxXMLParser);
+z.registerAjaxType("xml", "application/xml", ajaxXMLParser);
+
+function ajaxXMLParser(data, isResponse) {
+	var parser;
+
+	if (!isResponse) {
+		parser = new XMLSerializer();
+		return parser.serializeToString(data);
+	}
+
+	if (this.responseXML) {
+		return this.responseXML;
+	}
+
+	parser = new DOMParser();
+	return parser.parseFromString(data, "application/xml");
+}
+
 if ("dataset" in document.body) {
 	z.fn.data = function (key, value) {
 		var i, l;
@@ -222,7 +369,7 @@ z.fn.html = function (value) {
 	var i, l;
 
 	if (value === undefined) {
-		return this[0].innerHTML;
+		return this.innerHTML;
 	}
 
 	for (i = 0, l = this.length; i < l; i++) {
@@ -314,81 +461,6 @@ if ("classList" in document.documentElement) {
 	};
 }
 
-z.fn.append = function (value) {
-	var element, i = 0, l = this.length;
-
-	if (value === undefined) {
-		throw new Error("First parameter of z#append is required.");
-	}
-
-	if (typeof value === "string") {
-		for (; i < l; i++) {
-			this[i].insertAdjacentHTML('beforeend', value);
-		}
-
-		return this;
-	}
-
-	if (value instanceof zArray) {
-		value = value[0];
-	}
-
-
-	for (; i < l; i++) {
-		this[i].appendChild(value);
-	}
-
-	return this;
-}
-
-z.fn.prepend = function (value) {
-	var element, i = 0, l = this.length;
-
-	if (value === undefined) {
-		throw new Error("First parameter of z#prepend is required.");
-	}
-
-	if (typeof value === "string") {
-		for (; i < l; i++) {
-			this[i].insertAdjacentHTML('afterbegin', value);
-		}
-
-		return this;
-	}
-
-	if (value instanceof zArray) {
-		value = value[0];
-	}
-
-
-	for (; i < l; i++) {
-		this[i].insertBefore(value, this[i].firstChild);
-	}
-
-	return this;
-}
-
-z.fn.css = function (rule, value) {
-	var i = 0, l = this.length;
-
-	if (rule === undefined) {
-		throw new Error("First parameter of z#css is required.");
-	}
-
-	if (value === undefined) {
-			return getComputedStyle(this[0])[rule];
-	} else {
-		rule = rule.replace(/-./g, function (result) {
-		    return result.substr(1).toUpperCase();
-		});
-
-		for (; i < l; i++) {
-			this[i].style[rule] = value;
-		}
-	}
-
-	return this;
-}
 var _selectorsCache,
 	_selectors = {};
 
@@ -612,5 +684,30 @@ z.fn.each = _each(function each(fn) {
 	fn.call(this, this);
 	return this;
 });
+
+z.queryString = function (obj, prefix) {
+	var i, key, val,
+		strings = [];
+
+	for (i in obj) {
+		if (obj.hasOwnProperty(i)) {
+			if (prefix) {
+				key = prefix + "[" + i + "]";
+			} else {
+				key = i;
+			}
+
+			val = obj[i];
+
+			if (val && typeof val === "object") {
+				strings.push(queryString(val, key));
+			} else {
+				strings.push(encodeURIComponent(key) + "=" + encodeURIComponent(val));
+			}
+		}
+	}
+
+	return strings.join("&");
+};
 
 })(window, document);
