@@ -6,7 +6,7 @@
  * Released under the MIT license
  * https://github.com/NEURS/z.js/blob/master/LICENSE
  *
- * Date: 2014-08-27T17:10Z
+ * Date: 2014-09-09T18:02Z
  */
 ;(function (window, document) {
 
@@ -269,6 +269,18 @@ z.fn.off = z.fn.unbind = _each(function _off(eventType, fn) {
 	this.removeEventListener(eventType, fn, false);
 });
 
+z.ready = z.fn.ready = function (fn) {
+    var states = ["interactive", "loaded", "complete"];
+
+    if (~states.indexOf(document.readyState)) {
+        setTimeout(fn, 0);
+    } else {
+        document.addEventListener('DOMContentLoaded', fn);
+    }
+
+    return this;
+};
+
 z.fn.trigger = function (eventType, data) {
 	var event, _data,
 		i = 0,
@@ -288,6 +300,7 @@ z.fn.trigger = function (eventType, data) {
 
 	return this;
 };
+
 
 function _isWithFunction(elem, fn) {
 	return fn.call(elem, elem);
