@@ -6,7 +6,7 @@
  * Released under the MIT license
  * https://github.com/NEURS/z.js/blob/master/LICENSE
  *
- * Date: 2014-10-27T21:53Z
+ * Date: 2014-10-27T22:04Z
  */
 ;(function (window, document) {
 
@@ -15,7 +15,7 @@ var zArray, _window, _document, iframe;
 function z(elem, scope) {
 	if (elem instanceof zArray) {
 		return elem;
-	} else if (elem instanceof Element) {
+	} else if (elem instanceof Element || elem instanceof Window || elem instanceof Document) {
 		return new zArray(elem);
 	} else if (elem === undefined || elem === null) {
 		return new zArray();
