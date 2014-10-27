@@ -6,7 +6,7 @@
  * Released under the MIT license
  * https://github.com/NEURS/z.js/blob/master/LICENSE
  *
- * Date: 2014-08-27T17:10Z
+ * Date: 2014-08-27T18:33Z
  */
 ;(function (window, document) {
 
@@ -700,7 +700,7 @@ z.queryString = function (obj, prefix) {
 			val = obj[i];
 
 			if (val && typeof val === "object") {
-				strings.push(queryString(val, key));
+				strings.push(z.queryString(val, key));
 			} else {
 				strings.push(encodeURIComponent(key) + "=" + encodeURIComponent(val));
 			}
