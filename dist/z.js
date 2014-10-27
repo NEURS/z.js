@@ -1,12 +1,12 @@
 /*!
- * z.js JavaScript Library v0.0.3
+ * z.js JavaScript Library v0.0.4
  * https://github.com/NEURS/z.js
  *
  * Copyright 2014 NEURS LLC, Kevin J. Martin, and other contributors
  * Released under the MIT license
  * https://github.com/NEURS/z.js/blob/master/LICENSE
  *
- * Date: 2014-08-27T18:33Z
+ * Date: 2014-10-27T21:53Z
  */
 ;(function (window, document) {
 
@@ -15,7 +15,7 @@ var zArray, _window, _document, iframe;
 function z(elem, scope) {
 	if (elem instanceof zArray) {
 		return elem;
-	} else if (elem instanceof EventTarget) {
+	} else if (elem instanceof Element) {
 		return new zArray(elem);
 	} else if (elem === undefined || elem === null) {
 		return new zArray();
@@ -261,6 +261,10 @@ if ("dataset" in document.body) {
 	};
 }
 
+z.data = function (elem, key, value) {
+	z(elem).data(key, value);
+};
+
 z.fn.on = z.fn.bind = _each(function _on(eventType, fn) {
 	this.addEventListener(eventType, fn, false);
 });
@@ -270,13 +274,20 @@ z.fn.off = z.fn.unbind = _each(function _off(eventType, fn) {
 });
 
 z.fn.trigger = function (eventType, data) {
-	var event, _data,
+	var event,
 		i = 0,
 		l = this.length;
 
+	if (data === undefined) {
+		data = {};
+	}
+
+	data.event = data;
+
 	try {
-		_data	= data ? {detail: data} : undefined;
-		event	= new CustomEvent(eventType, _data);
+		event = new CustomEvent(eventType, {
+			detail: data
+		});
 	} catch (err) {
 		event = document.createEvent('CustomEvent');
 		event.initCustomEvent(eventType, true, true, data);
@@ -319,7 +330,7 @@ z.fn.is = (function _is() {
 			break;
 
 			case "object":
-				if (selector instanceof EventTarget) {
+				if (selector instanceof Element) {
 					_isWith = _isWithElement;
 				} else {
 					throw new Error("First parameter of z#is is invalid");
@@ -369,7 +380,7 @@ z.fn.html = function (value) {
 	var i, l;
 
 	if (value === undefined) {
-		return this.innerHTML;
+		return this[0].innerHTML;
 	}
 
 	for (i = 0, l = this.length; i < l; i++) {
@@ -460,6 +471,121 @@ if ("classList" in document.documentElement) {
 		return this;
 	};
 }
+
+z.fn.append = function (value) {
+	var element,
+		i = 0,
+		l = this.length;
+
+	if (value === undefined) {
+		throw new Error("First parameter of z#append is required.");
+	}
+
+	if (typeof value === "string") {
+		for (; i < l; i++) {
+			this[i].insertAdjacentHTML('beforeend', value);
+		}
+
+		return this;
+	}
+
+	if (value instanceof zArray) {
+		value = value[0];
+	}
+
+	for (; i < l; i++) {
+		this[i].appendChild(value);
+	}
+
+	return this;
+}
+
+z.fn.prepend = function (value) {
+	var element,
+		i = 0,
+		l = this.length;
+
+	if (value === undefined) {
+		throw new Error("First parameter of z#prepend is required.");
+	}
+
+	if (typeof value === "string") {
+		for (; i < l; i++) {
+			this[i].insertAdjacentHTML('afterbegin', value);
+		}
+
+		return this;
+	}
+
+	if (value instanceof zArray) {
+		value = value[0];
+	}
+
+	for (; i < l; i++) {
+		this[i].insertBefore(value, this[i].firstChild);
+	}
+
+	return this;
+}
+
+z.fn.after = function (value) {
+	var element,
+		i = 0,
+		l = this.length;
+
+	if (value === undefined) {
+		throw new Error("First parameter of z#append is required.");
+	}
+
+	if (typeof value === "string") {
+		for (; i < l; i++) {
+			this[i].insertAdjacentHTML('afterend', value);
+		}
+
+		return this;
+	}
+
+	if (value instanceof zArray) {
+		value = value[0];
+	}
+
+	for (; i < l; i++) {
+		this[i].insertAdjacentHTML('afterend', value.outerHTML);
+	}
+
+	return this;
+}
+
+z.fn.css = function (rule, value) {
+	var i = 0,
+		l = this.length;
+
+	if (rule === undefined) {
+		throw new Error("First parameter of z#css is required.");
+	}
+
+	if (value === undefined) {
+		return getComputedStyle(this[0])[rule];
+	} else {
+		rule = rule.replace(/-./g, function (result) {
+		    return result.substr(1).toUpperCase();
+		});
+
+		for (; i < l; i++) {
+			this[i].style[rule] = value;
+		}
+	}
+
+	return this;
+}
+
+z.fn.remove = _each(function () {
+	this.parentNode.removeChild(this);
+});
+
+z.fn.empty = _each(function () {
+	this.innerHTML = '';
+});
 
 var _selectorsCache,
 	_selectors = {};
@@ -592,12 +718,16 @@ z.fn.siblings = _eachNew(function () {
 	}, this);
 });
 
+z.fn.prevAll = _eachNew(function(){
+	return dir(this, "previousElementSibling");
+});
+
 function _checkValidElement(elem) {
 	if (elem instanceof zArray) {
 		return true;
 	}
 
-	if (elem instanceof EventTarget) {
+	if (elem instanceof Element) {
 		return true;
 	}
 
@@ -640,6 +770,17 @@ function _eachNew(fn) {
 
 		return arr;
 	};
+}
+
+function dir(elem, key) {
+	var matched = new zArray();
+
+	while (elem[key] && elem.nodeType === 1) {
+		elem = elem[key];
+		matched.push(elem);
+	}
+
+	return matched;
 }
 
 z.deepExtend = function _extend(deep) {
