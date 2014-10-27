@@ -6,7 +6,7 @@
  * Released under the MIT license
  * https://github.com/NEURS/z.js/blob/master/LICENSE
  *
- * Date: 2014-10-27T22:04Z
+ * Date: 2014-10-27T22:06Z
  */
 ;(function (window, document) {
 
@@ -330,7 +330,7 @@ z.fn.is = (function _is() {
 			break;
 
 			case "object":
-				if (selector instanceof Element) {
+				if (selector instanceof Element || selector instanceof Window || selector instanceof Document) {
 					_isWith = _isWithElement;
 				} else {
 					throw new Error("First parameter of z#is is invalid");
@@ -727,7 +727,7 @@ function _checkValidElement(elem) {
 		return true;
 	}
 
-	if (elem instanceof Element) {
+	if (elem instanceof Element || elem instanceof Window || elem instanceof Document) {
 		return true;
 	}
 
