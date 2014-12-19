@@ -1,12 +1,12 @@
 /*!
- * z.js JavaScript Library v0.0.4
+ * z.js JavaScript Library v0.0.5
  * https://github.com/NEURS/z.js
  *
  * Copyright 2014 NEURS LLC, Kevin J. Martin, and other contributors
  * Released under the MIT license
  * https://github.com/NEURS/z.js/blob/master/LICENSE
  *
- * Date: 2014-10-27T22:06Z
+ * Date: 2014-12-19T15:33Z
  */
 ;(function (window, document) {
 
@@ -269,6 +269,21 @@ z.fn.on = z.fn.bind = _each(function _on(eventType, fn) {
 	this.addEventListener(eventType, fn, false);
 });
 
+z.fn.one = _each(function (event, fn) {
+	var called = false;
+
+	z(this).on(event, function onceFn(e) {
+		if (called) {
+			return;
+		}
+
+		called = true;
+		z(this).off(event, onceFn);
+
+		fn.call(this, e);
+	});
+});
+
 z.fn.off = z.fn.unbind = _each(function _off(eventType, fn) {
 	this.removeEventListener(eventType, fn, false);
 });
@@ -433,12 +448,61 @@ z.fn.attr = function (key, value) {
 };
 
 z.fn.replaceWith = z.fn.replace = _each(function (value) {
-	if (value === undefined) {
-		throw new Error("First parameter of z#replace is required");
+	var scripts;
+
+	if (value === undefined || value === null) {
+		this.remove();
+	} else if (value instanceof zArray || value instanceof EventTarget) {
+		scripts = _extractScripts(value);
+
+		if (value instanceof zArray) {
+			value = value[0];
+		}
+
+		this.parentNode.replaceChild(value, this);
+
+		_addScripts(scripts);
+	} else {
+		this.outerHTML = value;
+	}
+});
+
+function _extractScripts(elem) {
+	var scripts,
+		i	= 0,
+		ret	= [];
+
+	elem	= z(elem);
+	scripts	= elem.find("script");
+
+	for (; i < scripts.length; i++) {
+		ret.push({
+			src: scripts[i].src,
+			text: scripts[i].textContent
+		});
+
+		scripts[i].remove();
 	}
 
-	this.outerHTML = value;
-});
+	return ret;
+}
+
+function _addScripts(scripts) {
+	var script,
+		i = 0;
+
+	for (; i < scripts.length; i++) {
+		script = document.createElement("script");
+
+		if (scripts[i].src) {
+			script.src = scripts[i].src;
+		} else if (scripts[i].text) {
+			script.text = scripts[i].text;
+		}
+
+		document.head.appendChild(script).parentNode.removeChild(script);
+	}
+}
 
 if ("classList" in document.documentElement) {
 	z.fn.addClass = _each(function addClass(className) {
@@ -457,6 +521,19 @@ if ("classList" in document.documentElement) {
 
 		this.classList[force ? "add" : "remove"](className);
 	});
+
+	z.fn.hasClass = function (className) {
+		var i = 0,
+			l = this.length;
+
+		for (; i < l; i++) {
+			if (this[i].classList.contains(className)) {
+				return true;
+			}
+		}
+
+		return false;
+	};
 } else {
 	z.fn.addClass = _each(function addClass(className) {
 		this.className += " " + className;
@@ -469,6 +546,20 @@ if ("classList" in document.documentElement) {
 	z.fn.toggleClass = function (className, force) {
 		this[force ? "addClass" : "removeClass"](className);
 		return this;
+	};
+
+	z.fn.hasClass = function (className) {
+		var i = 0,
+			l = this.length,
+			r = new RegExp("(^| )" + className + "( |$)", "gi");
+
+		for (; i < l; i++) {
+			if (r.test(this[i].className)) {
+				return true;
+			}
+		}
+
+		return false;
 	};
 }
 
@@ -720,6 +811,10 @@ z.fn.siblings = _eachNew(function () {
 
 z.fn.prevAll = _eachNew(function(){
 	return dir(this, "previousElementSibling");
+});
+
+z.fn.children = _eachNew(function (selector) {
+	return this.children;
 });
 
 function _checkValidElement(elem) {
