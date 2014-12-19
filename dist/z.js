@@ -6,7 +6,7 @@
  * Released under the MIT license
  * https://github.com/NEURS/z.js/blob/master/LICENSE
  *
- * Date: 2014-12-19T15:33Z
+ * Date: 2014-12-19T17:13Z
  */
 ;(function (window, document) {
 
@@ -855,7 +855,7 @@ function _eachNew(fn) {
 			ret = fn.apply(this[i], arguments);
 
 			if (ret) {
-				if (Array.isArray(ret) && ret.length) {
+				if (Array.isArray(ret) && ret.length || ret instanceof HTMLCollection) {
 					arr.push.apply(arr, ret);
 				} else {
 					arr.push(ret);
