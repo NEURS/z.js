@@ -6,7 +6,7 @@
  * Released under the MIT license
  * https://github.com/NEURS/z.js/blob/master/LICENSE
  *
- * Date: 2014-12-19T17:13Z
+ * Date: 2015-01-23T19:24Z
  */
 ;(function (window, document) {
 
@@ -50,6 +50,19 @@ try {
 	zArray = iframe.contentWindow.Array;
 
 	document.body.removeChild(iframe);
+
+	try {
+		_window = z(window);
+	} catch (e) {
+		if (window.ActiveXObject) {
+			iframe = new ActiveXObject("htmlfile");
+
+			iframe.write("<script></script>");
+			iframe.close();
+
+			zArray = iframe.parentWindow.Array;
+		}
+	}
 } catch (e) {
 	zArray = Array;
 }
@@ -57,7 +70,7 @@ try {
 //window.$	= z;
 window.z	= z;
 z.fn		= zArray.prototype;
-_window		= z(window);
+_window		= _window || z(window);
 _document	= z(document);
 
 z.fn.find = function (strElem) {
