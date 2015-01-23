@@ -1,16 +1,17 @@
 /*!
- * z.js JavaScript Library v0.0.5
+ * z.js JavaScript Library v0.0.7
  * https://github.com/NEURS/z.js
  *
  * Copyright 2014 NEURS LLC, Kevin J. Martin, and other contributors
  * Released under the MIT license
  * https://github.com/NEURS/z.js/blob/master/LICENSE
  *
- * Date: 2015-01-23T19:24Z
+ * Date: 2015-01-23T23:32Z
  */
 ;(function (window, document) {
 
-var zArray, _window, _document, iframe;
+var zArray, _window, _document,
+	cache = [];
 
 function z(elem, scope) {
 	if (elem instanceof zArray) {
@@ -38,39 +39,42 @@ function z(elem, scope) {
 
 function noop(){}
 
-try {
-	iframe = document.createElement("iframe");
+(function () {
+	var scope;
 
-	iframe.style.width			= 0;
-	iframe.style.height			= 0;
-	iframe.style.borderStyle	= "none";
+	if ('ActiveXObject' in window) {
+		scope = new ActiveXObject("htmlfile");
 
-	document.body.appendChild(iframe);
+		scope.open();
+		scope.write("<script><\/script>");
+		scope.close();
+		cache.push(scope);
 
-	zArray = iframe.contentWindow.Array;
-
-	document.body.removeChild(iframe);
+		zArray = scope.parentWindow.Array;
+		return;
+	}
 
 	try {
-		_window = z(window);
+		scope = document.createElement("iframe");
+
+		scope.style.width            = 0;
+		scope.style.height            = 0;
+		scope.style.borderStyle    = "none";
+
+		document.body.appendChild(scope);
+
+		zArray = scope.contentWindow.Array;
+
+		document.body.removeChild(scope);
 	} catch (e) {
-		if (window.ActiveXObject) {
-			iframe = new ActiveXObject("htmlfile");
-
-			iframe.write("<script></script>");
-			iframe.close();
-
-			zArray = iframe.parentWindow.Array;
-		}
+		zArray = Array;
 	}
-} catch (e) {
-	zArray = Array;
-}
+})();
 
 //window.$	= z;
 window.z	= z;
 z.fn		= zArray.prototype;
-_window		= _window || z(window);
+_window		= z(window);
 _document	= z(document);
 
 z.fn.find = function (strElem) {
@@ -197,7 +201,7 @@ z.registerAjaxType("html", "text/html", function (data, isResponse) {
 	}
 
 	arr	= new zArray();
-	doc = document.implementation.createHTMLDocument();
+	doc = document.implementation.createHTMLDocument("");
 
 	doc.documentElement.innerHTML = data;
 
