@@ -6,7 +6,7 @@
  * Released under the MIT license
  * https://github.com/NEURS/z.js/blob/master/LICENSE
  *
- * Date: 2015-01-23T23:32Z
+ * Date: 2015-01-30T20:46Z
  */
 ;(function (window, document) {
 
@@ -229,53 +229,127 @@ function ajaxXMLParser(data, isResponse) {
 	return parser.parseFromString(data, "application/xml");
 }
 
-if ("dataset" in document.body) {
-	z.fn.data = function (key, value) {
-		var i, l;
+z.fn.addClass = _each(_addClass);
 
-		if (!this.length) {
-			return;
+z.fn.removeClass = _each(_removeClass);
+
+z.fn.toggleClass = _each(function toggleClass(className, force) {
+	var fn;
+
+	if (force === undefined) {
+		fn = _elemHasClass(this, className) ? _removeClass : _addClass;
+	} else {
+		fn = force ? _addClass : _removeClass;
+	}
+
+	fn.call(this, className);
+});
+
+z.fn.hasClass = function (className) {
+	var i = 0,
+		l = this.length;
+
+	for (; i < l; i++) {
+		if (_elemHasClass(this[i], className)) {
+			return true;
 		}
+	}
 
-		if (key === undefined) {
-			return this[0].dataset;
-		} else if (value === undefined) {
-			return this[0].dataset[key];
+	return false;
+};
+
+function _addClass(className) {
+	if ("classList" in this) {
+		this.classList.add(className);
+	} else {
+		this.className += " " + className;
+	}
+}
+
+function _removeClass(className) {
+	var regexp;
+
+	if ("classList" in this) {
+		this.classList.remove(className);
+	} else {
+		this.className = this.className.replace(_classRegexp(className), " ");
+	}
+}
+
+function _classRegexp(className) {
+	var regexp = _cache.get("class." + className);
+
+	if (!regexp) {
+		regexp = new RegExp("(^|\\b)" + className + "(\\b|$)", "g");
+		_cache.set("class." + className, regexp);
+	}
+
+	return regexp;
+}
+
+function _elemHasClass(elem, className) {
+	if ("classList" in elem) {
+		if (elem.classList.contains(className)) {
+			return true;
 		}
+	} else if (_classRegexp(className).test(elem.className)) {
+		return true;
+	}
 
-		for (i = 0, l = this.length; i < l; i++) {
-			this[i].dataset[key] = value;
+	return false;
+}
+
+z.fn.data = function (key, value) {
+	if (key !== undefined && value !== undefined) {
+		return this.setData(key, value);
+	} else if (this.length) {
+		return this.getData(key);
+	}
+};
+
+z.fn.setData = _each(function _setData(key, value) {
+	var elem = this;
+
+	if ("dataset" in elem) {
+		elem.dataset[_toCamelCase(key)] = value;
+	} else {
+		elem.setAttribute(_toDashes(key), value);
+	}
+});
+
+z.fn.getData = function (key) {
+	var elem = this[0];
+
+	if (!elem) {
+		return;
+	} else if (key !== undefined) {
+		if ("dataset" in elem) {
+			return elem.dataset[_toCamelCase(key)];
+		} else {
+			return elem.getAttribute(_toDashes(key));
 		}
+	} else if ("dataset" in elem) {
+		return Object.create(elem.dataset);
+	}
 
-		return this;
-	};
-} else {
-	z.fn.data = function (key, value) {
-		var i, l,
-			dataKey = "data-" + (key || "");
+	return _getDataAttrs(elem.attributes);
+};
 
-		if (!this.length) {
-			return;
+function _getDataAttrs(attrs) {
+	var attr,
+		i	= 0,
+		l	= attrs.length,
+		ret	= {};
+
+	for (; i < l; i++) {
+		attr = attrs[i];
+
+		if (attr.name.indexOf("data-") === 0) {
+			ret[_toDashes(attr.name)] = attr.value;
 		}
+	}
 
-		if (key === undefined) {
-			i = {};
-
-			[].forEach.call(this[0].attributes, function (attr) {
-				return i[attr.name] = attr.value;
-			});
-
-			return i;
-		} else if (value === undefined) {
-			return this[0].attributes[dataKey];
-		}
-
-		for (i = 0, l = this.length; i < l; i++) {
-			this[i].dataset[dataKey] = value;
-		}
-
-		return this;
-	};
+	return ret;
 }
 
 z.data = function (elem, key, value) {
@@ -344,10 +418,10 @@ z.fn.is = (function _is() {
 	var matches,
 		body = document.body;
 
-	matches	= body.matches || body.matchesSelector || body.msMatchesSelector;
-	matches = matches || body.mozMatchesSelector || body.webkitMatchesSelector || body.oMatchesSelector;
+	matches	= body.matches || body.matchesSelector || body.webkitMatchesSelector;
+	matches = matches || body.mozMatchesSelector || body.msMatchesSelector || body.oMatchesSelector;
 
-	return function (selector) {
+	return function is(selector) {
 		var _isWith, ret,
 			i	= 0,
 			l	= this.length;
@@ -362,14 +436,20 @@ z.fn.is = (function _is() {
 			break;
 
 			case "object":
-				if (selector instanceof Element || selector instanceof Window || selector instanceof Document) {
+				if (
+					selector instanceof Element ||
+					selector instanceof Window ||
+					selector instanceof Document
+				) {
 					_isWith = _isWithElement;
 				} else {
 					throw new Error("First parameter of z#is is invalid");
 				}
+			break;
+
 			default:
 				throw new Error("First parameter of z#is is invalid");
-			break;
+			//break;
 		}
 
 		for (; i < l; i++) {
@@ -444,7 +524,7 @@ z.fn.getAttr = function (key) {
 	return this[0] && this[0].getAttribute(key);
 };
 
-z.fn.setAttr = _each(function (key, value) {
+z.fn.setAttr = _each(function setAttr(key, value) {
 	if (!key) {
 		throw new Error("First parameter of z#setAttr is required");
 	} else if (value === undefined) {
@@ -452,7 +532,6 @@ z.fn.setAttr = _each(function (key, value) {
 	}
 
 	this.setAttribute(key, value);
-	return this;
 });
 
 z.fn.attr = function (key, value) {
@@ -464,7 +543,7 @@ z.fn.attr = function (key, value) {
 	return this;
 };
 
-z.fn.replaceWith = z.fn.replace = _each(function (value) {
+z.fn.replaceWith = z.fn.replace = _each(function replaceWith(value) {
 	var scripts;
 
 	if (value === undefined || value === null) {
@@ -521,65 +600,6 @@ function _addScripts(scripts) {
 	}
 }
 
-if ("classList" in document.documentElement) {
-	z.fn.addClass = _each(function addClass(className) {
-		this.classList.add(className);
-	});
-
-	z.fn.removeClass = _each(function removeClass(className) {
-		this.classList.remove(className);
-	});
-
-	z.fn.toggleClass = _each(function toggleClass(className, force) {
-		if (force === undefined) {
-			this.classList.toggle(className);
-			return;
-		}
-
-		this.classList[force ? "add" : "remove"](className);
-	});
-
-	z.fn.hasClass = function (className) {
-		var i = 0,
-			l = this.length;
-
-		for (; i < l; i++) {
-			if (this[i].classList.contains(className)) {
-				return true;
-			}
-		}
-
-		return false;
-	};
-} else {
-	z.fn.addClass = _each(function addClass(className) {
-		this.className += " " + className;
-	});
-
-	z.fn.removeClass = _each(function removeClass(className) {
-		this.className += this.className.replace(new RegExp("(^|\\b)" + className + "(\\b|$)", "g"), " ");
-	});
-
-	z.fn.toggleClass = function (className, force) {
-		this[force ? "addClass" : "removeClass"](className);
-		return this;
-	};
-
-	z.fn.hasClass = function (className) {
-		var i = 0,
-			l = this.length,
-			r = new RegExp("(^| )" + className + "( |$)", "gi");
-
-		for (; i < l; i++) {
-			if (r.test(this[i].className)) {
-				return true;
-			}
-		}
-
-		return false;
-	};
-}
-
 z.fn.append = function (value) {
 	var element,
 		i = 0,
@@ -606,7 +626,7 @@ z.fn.append = function (value) {
 	}
 
 	return this;
-}
+};
 
 z.fn.prepend = function (value) {
 	var element,
@@ -634,7 +654,7 @@ z.fn.prepend = function (value) {
 	}
 
 	return this;
-}
+};
 
 z.fn.after = function (value) {
 	var element,
@@ -647,7 +667,7 @@ z.fn.after = function (value) {
 
 	if (typeof value === "string") {
 		for (; i < l; i++) {
-			this[i].insertAdjacentHTML('afterend', value);
+			this[i].insertAdjacentHTML("afterend", value);
 		}
 
 		return this;
@@ -658,11 +678,11 @@ z.fn.after = function (value) {
 	}
 
 	for (; i < l; i++) {
-		this[i].insertAdjacentHTML('afterend', value.outerHTML);
+		this[i].insertAdjacentHTML("afterend", value.outerHTML);
 	}
 
 	return this;
-}
+};
 
 z.fn.css = function (rule, value) {
 	var i = 0,
@@ -685,13 +705,13 @@ z.fn.css = function (rule, value) {
 	}
 
 	return this;
-}
+};
 
-z.fn.remove = _each(function () {
+z.fn.remove = _each(function remove() {
 	this.parentNode.removeChild(this);
 });
 
-z.fn.empty = _each(function () {
+z.fn.empty = _each(function empty() {
 	this.innerHTML = '';
 });
 
@@ -808,30 +828,72 @@ z.registerSelector(":input", (function selectorFirst() {
 	};
 })());
 
-z.fn.parent = _eachNew(function () {
+z.fn.parent = _eachNew(function parent() {
 	return this.parentNode;
 });
 
-z.fn.next = _eachNew(function () {
+z.fn.next = _eachNew(function next() {
 	return this.nextElementSibling;
 });
 
-z.fn.prev = z.fn.previous = _eachNew(function () {
+z.fn.prev = z.fn.previous = _eachNew(function prev() {
 	return this.previousElementSibling;
 });
 
-z.fn.siblings = _eachNew(function () {
+z.fn.siblings = _eachNew(function siblings() {
 	return [].filter.call(this.parentNode.children, function(child) {
 		return child !== this;
 	}, this);
 });
 
-z.fn.prevAll = _eachNew(function(){
+z.fn.nextAll = _eachNew(function nextAll(){
+	return dir(this, "nextElementSibling");
+});
+
+z.fn.prevAll = _eachNew(function prevAll(){
 	return dir(this, "previousElementSibling");
 });
 
-z.fn.children = _eachNew(function (selector) {
+z.fn.children = _eachNew(function children(selector) {
 	return this.children;
+});
+
+var regexpDash		= /-(.)/g,
+	regexpUpperCase	= /(?!^)([A-Z])/g;
+
+function _toCamelCase(string) {
+	return string.toLowerCase().replace(regexpDash, _toCamelCaseHelper);
+}
+
+function _toCamelCaseHelper(match, group) {
+	return group.toUpperCase();
+}
+
+function _toDashes(string) {
+	return string.replace(regexpUpperCase, _toDashesHelper).toLowerCase();
+}
+
+function _toDashesHelper(match, group) {
+	return '-' + group.toLowerCase();
+}
+
+var _cache = (function () {
+	var cache;
+
+	if ("Map" in window) {
+		return new Map();
+	}
+
+	cache = {};
+
+	return {
+		set: function (key, value) {
+			cache[key] = value;
+		},
+		get: function (key) {
+			return cache[key];
+		}
+	};
 });
 
 function _checkValidElement(elem) {
