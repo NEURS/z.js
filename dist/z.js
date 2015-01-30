@@ -1,12 +1,12 @@
 /*!
- * z.js JavaScript Library v0.0.7
+ * z.js JavaScript Library v0.0.8
  * https://github.com/NEURS/z.js
  *
  * Copyright 2014 NEURS LLC, Kevin J. Martin, and other contributors
  * Released under the MIT license
  * https://github.com/NEURS/z.js/blob/master/LICENSE
  *
- * Date: 2015-01-30T21:25Z
+ * Date: 2015-01-30T21:43Z
  */
 ;(function (window, document) {
 
@@ -262,17 +262,18 @@ function _addClass(className) {
 	if ("classList" in this) {
 		this.classList.add(className);
 	} else {
-		this.className += " " + className;
+		this.setAttribute("class", this.getAttribute("class") + " " + className);
 	}
 }
 
 function _removeClass(className) {
-	var regexp;
+	var value;
 
 	if ("classList" in this) {
 		this.classList.remove(className);
 	} else {
-		this.className = this.className.replace(_classRegexp(className), " ");
+		value = this.getAttribute("class").replace(_classRegexp(className), " ");
+		this.setAttribute("class", value);
 	}
 }
 
@@ -894,7 +895,7 @@ var _cache = (function () {
 			return cache[key];
 		}
 	};
-});
+})();
 
 function _checkValidElement(elem) {
 	if (elem instanceof zArray) {
