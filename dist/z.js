@@ -6,7 +6,7 @@
  * Released under the MIT license
  * https://github.com/NEURS/z.js/blob/master/LICENSE
  *
- * Date: 2015-01-30T20:46Z
+ * Date: 2015-01-30T21:25Z
  */
 ;(function (window, document) {
 
@@ -313,7 +313,7 @@ z.fn.setData = _each(function _setData(key, value) {
 	if ("dataset" in elem) {
 		elem.dataset[_toCamelCase(key)] = value;
 	} else {
-		elem.setAttribute(_toDashes(key), value);
+		elem.setAttribute("data-" + _toDashes(key), value);
 	}
 });
 
@@ -326,7 +326,7 @@ z.fn.getData = function (key) {
 		if ("dataset" in elem) {
 			return elem.dataset[_toCamelCase(key)];
 		} else {
-			return elem.getAttribute(_toDashes(key));
+			return elem.getAttribute("data-" + _toDashes(key));
 		}
 	} else if ("dataset" in elem) {
 		return Object.create(elem.dataset);
@@ -345,7 +345,7 @@ function _getDataAttrs(attrs) {
 		attr = attrs[i];
 
 		if (attr.name.indexOf("data-") === 0) {
-			ret[_toDashes(attr.name)] = attr.value;
+			ret[_toCamelCase(attr.name.replace(/^data-/, ""))] = attr.value;
 		}
 	}
 
