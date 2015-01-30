@@ -1,0 +1,25 @@
+{
+  "name": "z.js",
+  "version": "0.0.7",
+  "homepage": "https://github.com/NEURS/z.js",
+  "authors": [
+    "Kevin Martin <kevin@neurs.com>"
+  ],
+  "description": "Simple DOM Manipulator",
+  "main": "dist/z.min.js",
+  "keywords": [
+    "z.js",
+    "javascript",
+    "js",
+    "dom",
+    "ajax"
+  ],
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ]
+}
