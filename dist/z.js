@@ -1,12 +1,12 @@
 /*!
- * z.js JavaScript Library v0.0.8
+ * z.js JavaScript Library v0.0.9
  * https://github.com/NEURS/z.js
  *
- * Copyright 2014 NEURS LLC, Kevin J. Martin, and other contributors
+ * Copyright 2015 NEURS LLC, Kevin J. Martin, and other contributors
  * Released under the MIT license
  * https://github.com/NEURS/z.js/blob/master/LICENSE
  *
- * Date: 2015-01-30T21:43Z
+ * Date: 2015-02-02T21:24Z
  */
 ;(function (window, document) {
 
@@ -863,7 +863,7 @@ var regexpDash		= /-(.)/g,
 	regexpUpperCase	= /(?!^)([A-Z])/g;
 
 function _toCamelCase(string) {
-	return string.toLowerCase().replace(regexpDash, _toCamelCaseHelper);
+	return string.replace(regexpDash, _toCamelCaseHelper);
 }
 
 function _toCamelCaseHelper(match, group) {
