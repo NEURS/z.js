@@ -1,12 +1,12 @@
 /*!
- * z.js JavaScript Library v0.0.9
+ * z.js JavaScript Library v0.0.10
  * https://github.com/NEURS/z.js
  *
  * Copyright 2015 NEURS LLC, Kevin J. Martin, and other contributors
  * Released under the MIT license
  * https://github.com/NEURS/z.js/blob/master/LICENSE
  *
- * Date: 2015-02-02T21:24Z
+ * Date: 2015-02-25T21:45Z
  */
 ;(function (window, document) {
 
@@ -131,16 +131,21 @@ z.ajax = function (options) {
 	req.onload = function () {
 		var resp;
 
+		resp = ajaxTypes[options.responseType].call(req, req.responseText, true);
+
 		if (req.status >= 200 && req.status < 400) {
-			resp = ajaxTypes[options.responseType].call(req, req.responseText, true);
 			options.success.call(options.context, resp);
 		} else {
-			options.error.call(options.context, req.status, req.statusText);
+			options.error.call(options.context, resp, req.status, req.statusText);
 		}
 	};
 
 	req.onerror = function () {
-		options.error.call(options.context, req.status, req.statusText);
+		var resp;
+
+		resp = ajaxTypes[options.responseType].call(req, req.responseText, true);
+
+		options.error.call(options.context, resp, req.status, req.statusText);
 	};
 
 	if (!~["HEAD", "GET"].indexOf(options.method.toUpperCase())) {
